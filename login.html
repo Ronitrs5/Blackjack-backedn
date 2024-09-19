@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Login</title>
+    <link rel="stylesheet" href="./login.css">
+</head>
+<body>
+
+    <div id="div-root">
+        <h3>Welcome to blackjack</h3>
+        <input placeholder="Enter username" id="login-username"><br>
+        <button id="login-button">Login</button>
+
+        <p id="login-text">*For you demo account, you will be getting $1000.</p>
+    </div>
+
+    <script>
+        function $(id) { return document.getElementById(id); }
+        let loginUsernameInput = $('login-username');
+        let loginButton = $('login-button');
+    
+        const URL = 'http://localhost:8000/api/login';
+    
+        async function createUser() {
+            let username = loginUsernameInput.value.trim();
+            let balance = 1000;
+    
+            if (!username) {
+                console.error('Username is required');
+                return;
+            }
+    
+            try {
+                console.log('inside try');
+                const response = await fetch(URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, balance }),
+                });
+    
+                const data = await response.json();
+                console.log(data);
+                window.location.href = 'http://localhost:8000/';
+            
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+    
+        loginButton.addEventListener('click', () => {
+            console.log('btn clicked');
+            createUser();
+        });
+    </script>
+    
+    
+</body>
+</html>

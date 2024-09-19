@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Game Lobby</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="lobby">
+        <input id="usernameInput" placeholder="Enter your username">
+        
+        <div id="div-create-join">
+            <div id="div-create">
+                <p>Create a new room</p>
+                <button id="createRoom">Create Room</button>
+            </div>
+            <div id="div-join">
+                <p>Join existing room</p>
+                <input id="roomIdInput" placeholder="Enter Room ID">
+                <button id="joinRoom">Join Room</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameRoom" style="display: none;">
+        <h2 id="roomTitle"></h2>
+        <div id="playersList"></div>
+        <button id="leaveRoom">Leave Room</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
