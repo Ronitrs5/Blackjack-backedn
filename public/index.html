@@ -26,8 +26,22 @@
     <div id="gameRoom" style="display: none;">
         <h2 id="roomTitle"></h2>
         <div id="playersList"></div>
+    
+        <h3>Select your bet:</h3>
+        <label>
+            <input type="radio" name="betAmount" value="50" checked> $50
+        </label>
+        <label>
+            <input type="radio" name="betAmount" value="100"> $100
+        </label>
+        <label>
+            <input type="radio" name="betAmount" value="150"> $150
+        </label><br>
+    
+        <button id="startGameButton">Start Game</button>
         <button id="leaveRoom">Leave Room</button>
     </div>
+    
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="client.js"></script>
