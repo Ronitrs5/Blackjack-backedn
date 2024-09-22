@@ -1,14 +1,15 @@
 const socket = io();
+function $(id){ return document.getElementById(id); }
 
-const createRoomBtn = document.getElementById('createRoom');
-const joinRoomBtn = document.getElementById('joinRoom');
-const usernameInput = document.getElementById('usernameInput');
-const roomIdInput = document.getElementById('roomIdInput');
-const lobbyDiv = document.getElementById('lobby');
-const gameRoomDiv = document.getElementById('gameRoom');
-const roomTitle = document.getElementById('roomTitle');
-const playersList = document.getElementById('playersList');
-const leaveRoomBtn = document.getElementById('leaveRoom');
+const createRoomBtn = $('createRoom');
+const joinRoomBtn = $('joinRoom');
+const usernameInput = $('usernameInput');
+const roomIdInput = $('roomIdInput');
+const lobbyDiv = $('lobby');
+const gameRoomDiv = $('gameRoom');
+const roomTitle = $('roomTitle');
+const playersList = $('playersList');
+const leaveRoomBtn = $('leaveRoom');
 
 let currentRoomId = null;
 
@@ -40,10 +41,6 @@ document.querySelectorAll('input[name="betAmount"]').forEach((radio) => {
     });
 });
 
-
-
-
-
 document.getElementById('startGameButton').addEventListener('click', () => {
     console.log('Start Game button clicked'); 
     const selectedBet = document.querySelector('input[name="betAmount"]:checked');
@@ -55,6 +52,17 @@ document.getElementById('startGameButton').addEventListener('click', () => {
         socket.emit('startGame', roomid);
     } else {
         console.log('Please select a bet amount before starting the game.');
+        alert('Select a bet amount')
+    }
+});
+
+leaveRoomBtn.addEventListener('click', () => {
+    if (currentRoomId) {
+        socket.emit('leaveRoom', currentRoomId);
+        lobbyDiv.style.display = 'block';
+        gameRoomDiv.style.display = 'none';
+        playersList.innerHTML = '';
+        currentRoomId = null;
     }
 });
 
@@ -86,19 +94,7 @@ socket.on('updatePlayerList', (players) => {
 });
 
 
-leaveRoomBtn.addEventListener('click', () => {
-    if (currentRoomId) {
-        socket.emit('leaveRoom', currentRoomId);
-
-        lobbyDiv.style.display = 'block';
-        gameRoomDiv.style.display = 'none';
-        playersList.innerHTML = '';
-        currentRoomId = null;
-    }
-});
-
 socket.on('betSizeUpdated', (betSize) => {
-
     const betOptions = document.querySelectorAll('input[name="betAmount"]');
     betOptions.forEach((option) => {
         if (parseInt(option.value, 10) === betSize) {
@@ -106,7 +102,6 @@ socket.on('betSizeUpdated', (betSize) => {
         }
     });
 });
-
 
 
 socket.on('playerLeft', (username) => {
@@ -137,5 +132,13 @@ socket.on('betSizeUpdated', (betSize) => {
 
 socket.on('matchStartedError', ()=>{
     alert('Match already started.')
+})
+
+socket.on('lessPlayersError', ()=>{
+    alert('Two or more players are required before starting game.')
+})
+
+socket.on('gameAlreadyStartedError', ()=>{
+    alert('This game is already started.')
 })
 

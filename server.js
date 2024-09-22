@@ -74,6 +74,7 @@ io.on('connection', (socket) => {
                 bet_size: 50,
                 can_join: true,
                 player_count: 1,
+                is_playing: false,
             };
         }
 
@@ -89,7 +90,7 @@ io.on('connection', (socket) => {
             cards_sum: 0,
             is_out: false,
             is_stand: false,
-            is_chance: false
+            is_chance: true,
         };
 
         rooms[roomId].players[socket.id] = {
@@ -213,15 +214,95 @@ io.on('connection', (socket) => {
     
 
     socket.on('startGame', (roomId) => {
+
         if (rooms[roomId]) {
+            if (rooms[roomId].player_count <= 1) {
+                socket.emit('lessPlayersError', 'Two or more players required to start the game');
+                return;
+            }
+    
             rooms[roomId].can_join = false;
             rooms[roomId].pot_amount = rooms[roomId].bet_size * rooms[roomId].player_count;
+    
+            let deck = createDeck();
+            shuffleDeck(deck);
+    
+            Object.values(rooms[roomId].players).forEach(player => {
+                if (player.balance >= rooms[roomId].bet_size) {
+                    player.balance -= rooms[roomId].bet_size;
+    
+                    player.cards_in_hand = drawCards(deck, 2);
+                    player.cards_sum = calculateCardSum(player.cards_in_hand);
+    
+                    console.log(`Player ${player.username} has cards:`, player.cards_in_hand);
+                    console.log(`Sum of cards: ${player.cards_sum}`);
+                } else {
+                    console.log(`Player ${player.username} does not have enough balance to place the bet.`);
+                    socket.emit('insufficientBalanceError', player.username);
+                }
+            });
+    
+            io.to(roomId).emit('gameStarted', rooms[roomId]);
+    
             console.log(`Game started in room: ${roomId}`);
             console.log('Current rooms:', JSON.stringify(rooms, null, 2));
         } else {
             console.log(`Room ${roomId} not found`);
         }
     });
+    
+    function createDeck() {
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let deck = [];
+    
+        for (let suit of suits) {
+            for (let value of values) {
+                deck.push({ suit, value });
+            }
+        }
+        return deck;
+    }
+    
+    //Fisher-Yates shuffle algorithn
+    function shuffleDeck(deck) {
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+    }
+    
+    function drawCards(deck, n) {
+        let drawnCards = [];
+        for (let i = 0; i < n; i++) {
+            drawnCards.push(deck.pop());
+        }
+        return drawnCards;
+    }
+    
+    function calculateCardSum(cards) {
+        let sum = 0;
+        let aceCount = 0;
+    
+        cards.forEach(card => {
+            if (card.value === 'A') {
+                aceCount += 1;
+                sum += 11; // Initially treat Ace as 11
+            } else if (['K', 'Q', 'J'].includes(card.value)) {
+                sum += 10; // Face cards are worth 10
+            } else {
+                sum += parseInt(card.value, 10); // Numeric cards are their face value
+            }
+        });
+    
+        // If the sum exceeds 21 and we have Aces, treat them as 1 instead of 11
+        while (sum > 21 && aceCount > 0) {
+            sum -= 10; // Change an Ace from 11 to 1
+            aceCount -= 1;
+        }
+    
+        return sum;
+    }
     
 
     function isUsernameTakenInRoom(roomId, username) {
@@ -237,4 +318,5 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('updatePlayerList', playerUsernames);
         }
     }
+
 });
