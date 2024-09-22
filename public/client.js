@@ -10,7 +10,7 @@ const roomTitle = document.getElementById('roomTitle');
 const playersList = document.getElementById('playersList');
 const leaveRoomBtn = document.getElementById('leaveRoom');
 
-let currentRoomId = null;  // Store the current room ID
+let currentRoomId = null;
 
 // Create room
 createRoomBtn.addEventListener('click', () => {
@@ -29,14 +29,28 @@ joinRoomBtn.addEventListener('click', () => {
     }
 });
 
+document.querySelectorAll('input[name="betAmount"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+        const selectedBet = document.querySelector('input[name="betAmount"]:checked');
+        let roomid = roomTitle.innerText;
+        if (selectedBet) {
+            const betAmount = parseInt(selectedBet.value, 10);
+            socket.emit('betSizeChanged', roomid, betAmount);
+        }
+    });
+});
+
+
+
+
 
 document.getElementById('startGameButton').addEventListener('click', () => {
-    console.log('Start Game button clicked'); // Check if this logs
+    console.log('Start Game button clicked'); 
     const selectedBet = document.querySelector('input[name="betAmount"]:checked');
     let roomid= roomTitle.innerText;
     if (selectedBet) {
         const betAmount = parseInt(selectedBet.value, 10);
-        console.log(`Bet amount selected: $${betAmount}`); // Log the selected bet
+        console.log(`Bet amount selected: $${betAmount}`);
         socket.emit('updateBetSize', roomid, betAmount);
         socket.emit('startGame', roomid);
     } else {
@@ -46,7 +60,6 @@ document.getElementById('startGameButton').addEventListener('click', () => {
 
 
 
-// When room is created, switch to game room view
 socket.on('roomCreated', (roomId) => {
     currentRoomId = roomId;
     roomTitle.textContent = roomId;
@@ -54,7 +67,7 @@ socket.on('roomCreated', (roomId) => {
     gameRoomDiv.style.display = 'block';
 });
 
-// When successfully joined a room
+
 socket.on('joinedRoom', (roomId) => {
     currentRoomId = roomId;
     roomTitle.textContent = roomId;
@@ -62,9 +75,9 @@ socket.on('joinedRoom', (roomId) => {
     gameRoomDiv.style.display = 'block';
 });
 
-// Update player list when the player list changes
+
 socket.on('updatePlayerList', (players) => {
-    playersList.innerHTML = '';  // Clear the list before updating
+    playersList.innerHTML = '';
     players.forEach(username => {
         const playerItem = document.createElement('div');
         playerItem.textContent = `Player: ${username}`;
@@ -72,20 +85,30 @@ socket.on('updatePlayerList', (players) => {
     });
 });
 
-// Leave room button
+
 leaveRoomBtn.addEventListener('click', () => {
     if (currentRoomId) {
         socket.emit('leaveRoom', currentRoomId);
 
-        // Return to lobby view
         lobbyDiv.style.display = 'block';
         gameRoomDiv.style.display = 'none';
-        playersList.innerHTML = '';  // Clear player list
+        playersList.innerHTML = '';
         currentRoomId = null;
     }
 });
 
-// Handle player leaving
+socket.on('betSizeUpdated', (betSize) => {
+
+    const betOptions = document.querySelectorAll('input[name="betAmount"]');
+    betOptions.forEach((option) => {
+        if (parseInt(option.value, 10) === betSize) {
+            option.checked = true; 
+        }
+    });
+});
+
+
+
 socket.on('playerLeft', (username) => {
     const playerItems = playersList.querySelectorAll('div');
     playerItems.forEach(item => {
@@ -95,7 +118,6 @@ socket.on('playerLeft', (username) => {
     });
 });
 
-// Display error messages
 socket.on('roomNotFoundError', (message) => {
     alert(message);
 });
@@ -111,7 +133,6 @@ socket.on('userExistsError', ()=>{
 
 socket.on('betSizeUpdated', (betSize) => {
     console.log(`The bet size has been updated to $${betSize}.`);
-    // You can also update the UI to reflect this change if needed
 });
 
 socket.on('matchStartedError', ()=>{

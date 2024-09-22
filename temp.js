@@ -62,13 +62,11 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Initialize player attributes
         const player = {
             id: socket.id,
             username,
-            balance: 1000,  // Default balance or fetch from DB
-            cards: [],  // Initialize with an empty array
-            // Add any additional attributes you need here
+            balance: 1000, 
+            cards: [], 
         };
 
         rooms[roomId].players.push(player);
@@ -91,13 +89,11 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Initialize player attributes
         const player = {
             id: socket.id,
             username,
-            balance: 1000,  // Default balance or fetch from DB
-            cards: [],  // Initialize with an empty array
-            // Add any additional attributes you need here
+            balance: 1000,
+            cards: [], 
         };
 
         rooms[roomId].players.push(player);
@@ -160,7 +156,6 @@ io.on('connection', (socket) => {
                 username: player.username,
                 balance: player.balance,
                 cards: player.cards,
-                // Include any additional attributes here
             }));
             io.to(roomId).emit('updatePlayerList', playerDetails);
         }

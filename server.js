@@ -92,7 +92,6 @@ io.on('connection', (socket) => {
             is_chance: false
         };
 
-        // Add the player to the room
         rooms[roomId].players[socket.id] = {
             id: socket.id,
             username,
@@ -101,7 +100,7 @@ io.on('connection', (socket) => {
 
         socket.join(roomId);
         socket.emit('roomCreated', roomId);
-        updatePlayerList(roomId); // Send updated player list
+        updatePlayerList(roomId); 
 
         console.log(`Room created with ID: ${roomId} by ${username}`);
         console.log('Current rooms:', JSON.stringify(rooms, null, 2));
@@ -130,10 +129,11 @@ io.on('connection', (socket) => {
             socket.emit('lobbyFullError', ()=>{
                 console.log('Lobby is full. Cannot join.')
             });
-            return
+            return;
         }
 
-        // Add the player to the room
+        
+
         rooms[roomId].players[socket.id] = {
             id: socket.id,
             username,
@@ -142,15 +142,15 @@ io.on('connection', (socket) => {
             cards_sum: 0,
             is_out: false,
             is_stand: false,
+            is_chance: false,
         };
 
-        // Increment player count
         rooms[roomId].player_count++;
 
-        socket.join(roomId); // Join the room
+        socket.join(roomId);
         socket.emit('joinedRoom', roomId);
         io.to(roomId).emit('playerJoined', username);
-        updatePlayerList(roomId); // Send updated player list
+        updatePlayerList(roomId); 
         console.log(`${username} joined room: ${roomId}`);
         console.log('Current rooms:', JSON.stringify(rooms, null, 2));
     });
@@ -159,14 +159,12 @@ io.on('connection', (socket) => {
         const username = usernames[socket.id]?.username;
         if (rooms[roomId]) {
             delete rooms[roomId].players[socket.id];
-            rooms[roomId].player_count--; // Decrement player count
-            socket.leave(roomId); // Leave the room
+            rooms[roomId].player_count--; 
+            socket.leave(roomId); 
 
-            // Update the player list for the room
             io.to(roomId).emit('playerLeft', username);
             updatePlayerList(roomId);
 
-            // If room is empty, delete it
             if (Object.keys(rooms[roomId].players).length === 0) {
                 delete rooms[roomId];
             }
@@ -182,12 +180,12 @@ io.on('connection', (socket) => {
         for (const roomId in rooms) {
             if (rooms[roomId].players[socket.id]) {
                 delete rooms[roomId].players[socket.id];
-                rooms[roomId].player_count--; // Decrement player count
+                rooms[roomId].player_count--;
                 io.to(roomId).emit('playerLeft', username);
                 updatePlayerList(roomId);
 
                 if (Object.keys(rooms[roomId].players).length === 0) {
-                    delete rooms[roomId]; // Delete room if empty
+                    delete rooms[roomId]; 
                 }
 
                 console.log(`${username} disconnected and left room: ${roomId}`);
@@ -199,18 +197,27 @@ io.on('connection', (socket) => {
     socket.on('updateBetSize', (roomId, betSize) => {
         if (rooms[roomId]) {
             rooms[roomId].bet_size = betSize;
-            io.to(roomId).emit('betSizeUpdated', betSize); // Notify all players in the room
+            io.to(roomId).emit('betSizeUpdated', betSize);
             console.log(`Bet size updated to $${betSize} in room ${roomId}`);
         }
     });
 
+
+    socket.on('betSizeChanged', (roomId, betSize) => {
+        if (rooms[roomId]) {
+            rooms[roomId].bet_size = betSize;
+            io.to(roomId).emit('betSizeUpdated', betSize); 
+            console.log(`Bet size updated to $${betSize} in room ${roomId}`);
+        }
+    });
+    
+
     socket.on('startGame', (roomId) => {
         if (rooms[roomId]) {
-            rooms[roomId].can_join = false; // Prevent new players from joining
+            rooms[roomId].can_join = false;
             rooms[roomId].pot_amount = rooms[roomId].bet_size * rooms[roomId].player_count;
             console.log(`Game started in room: ${roomId}`);
             console.log('Current rooms:', JSON.stringify(rooms, null, 2));
-            // Add additional game start logic here
         } else {
             console.log(`Room ${roomId} not found`);
         }
@@ -218,15 +225,12 @@ io.on('connection', (socket) => {
     
 
     function isUsernameTakenInRoom(roomId, username) {
-        // Check if the room exists and has players
         if (rooms[roomId] && typeof rooms[roomId].players === 'object') {
             return Object.values(rooms[roomId].players).some(player => player.username === username);
         }
-        // Room does not exist or has no players
         return false;
     }
 
-    // Send updated player list to everyone in the room
     function updatePlayerList(roomId) {
         if (rooms[roomId]) {
             const playerUsernames = Object.values(rooms[roomId].players).map(player => player.username);
