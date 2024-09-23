@@ -6,6 +6,7 @@ const user = mongoose.Schema(
             type: String, 
             required: true,
         },
+        
 
         balance:{
             type: Number,

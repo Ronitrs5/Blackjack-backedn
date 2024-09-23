@@ -319,4 +319,52 @@ io.on('connection', (socket) => {
         }
     }
 
+
+    socket.on('hit', (roomId, playerId) => {
+        console.log(`Hit event received for player: ${playerId} in room: ${roomId}`); // Debugging
+
+        const room = rooms[roomId];
+        if (room && room.players[playerId]) {
+            const player = room.players[playerId];
+            const newCard = room.card_deck.pop(); // Draw a new card from the deck
+            player.cards_in_hand.push(newCard);
+            player.cards_sum = calculateCardSum(player.cards_in_hand);
+    
+            io.to(roomId).emit('playerHit', playerId, newCard, player.cards_sum);
+            updatePlayerList(roomId); // Update player list to show new cards
+        }
+    });
+    
+    socket.on('stand', (roomId, playerId) => {
+        console.log(`Stand event received for player: ${playerId} in room: ${roomId}`); // Debugging
+
+        const room = rooms[roomId];
+        if (room && room.players[playerId]) {
+            const player = room.players[playerId];
+            player.is_stand = true; // Mark player as standing
+            io.to(roomId).emit('playerStood', playerId);
+            checkGameStatus(roomId); // Check if the game can continue
+        }
+    });
+    
+    // Function to check the game status
+    function checkGameStatus(roomId) {
+        const room = rooms[roomId];
+        const allPlayersStood = Object.values(room.players).every(player => player.is_stand || player.is_out);
+    
+        if (allPlayersStood) {
+            // Determine winner and end game logic
+            const winner = determineWinner(room.players);
+            io.to(roomId).emit('gameEnded', winner);
+            // Reset or cleanup the room as needed
+        }
+    }
+    
+    // Function to determine winner based on the players' sums
+    function determineWinner(players) {
+        // Implement your game logic here to determine the winner
+        // Return the winning player's username or details
+    }
+    
+
 });

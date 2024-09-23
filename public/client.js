@@ -10,6 +10,7 @@ const gameRoomDiv = $('gameRoom');
 const roomTitle = $('roomTitle');
 const playersList = $('playersList');
 const leaveRoomBtn = $('leaveRoom');
+const playersActionsList = $('playersActionsList');
 
 let currentRoomId = null;
 
@@ -142,3 +143,48 @@ socket.on('gameAlreadyStartedError', ()=>{
     alert('This game is already started.')
 })
 
+// Existing code...
+socket.on('gameStarted', (roomData) => {
+    // Show the game actions section
+    document.getElementById('gameActions').style.display = 'block';
+    updatePlayerActionsList(roomData.players);
+});
+
+// Function to update players' actions list
+function updatePlayerActionsList(players) {
+    playersActionsList.innerHTML = '';
+    Object.values(players).forEach(player => {
+        const playerDiv = document.createElement('div');
+        playerDiv.innerHTML = `
+            <strong>${player.username}</strong>: 
+            Cards: ${JSON.stringify(player.cards_in_hand)}, 
+            Sum: ${player.cards_sum} 
+            <button onclick="hit('${player.id}')">Hit</button>
+            <button onclick="stand('${player.id}')">Stand</button>
+        `;
+        playersActionsList.appendChild(playerDiv);
+    });
+}
+
+// Function to handle Hit action
+function hit(playerId) {
+    console.log(`Hit requested for player: ${playerId}`); // Debugging
+    socket.emit('hit', currentRoomId, playerId);
+}
+
+function stand(playerId) {
+    console.log(`Stand requested for player: ${playerId}`); // Debugging
+    socket.emit('stand', currentRoomId, playerId);
+}
+
+socket.on('playerHit', (playerId, newCard, cardsSum, players) => {
+    console.log(`${playerId} hit and received ${JSON.stringify(newCard)}. New sum: ${cardsSum}`);
+    // Use the players data received from the server
+    updatePlayerActionsList(players);
+});
+
+socket.on('playerStood', (playerId, players) => {
+    console.log(`${playerId} stood.`);
+    // Use the players data received from the server
+    updatePlayerActionsList(players);
+});
